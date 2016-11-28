@@ -89,9 +89,24 @@ function step(tag)
     if (tag == 'valid' and opt.snapshot ~= 0 and epoch % opt.snapshot == 0) or tag == 'predict' then
         -- Take a snapshot
         model:clearState()
+        local modelSave
+        if torch.type(model) == 'nn.DataParallelTable' then
+            modelSave = model:get(1)
+        else
+            modelSave = model
+        end
+
+        local modelFile = 'model_' .. epoch .. '.t7'
+        local optimFile = 'optimState_' .. epoch .. '.t7'
+
         torch.save(paths.concat(opt.save, 'options.t7'), opt)
-        torch.save(paths.concat(opt.save, 'optimState.t7'), optimState)
-        torch.save(paths.concat(opt.save, 'model_' .. epoch .. '.t7'), model)
+        torch.save(paths.concat(opt.save, optimFile), optimState)
+        torch.save(paths.concat(opt.save, modelFile), modelSave)
+        torch.save(paths.concat(opt.save, 'latest.t7'), {
+              epoch = epoch,
+              modelFile = modelFile,
+              optimFile = optimFile,
+        })
         local predFilename = 'preds.h5'
         if tag == 'predict' then predFilename = 'final_' .. predFilename end
         local predFile = hdf5.open(paths.concat(opt.save,predFilename),'w')

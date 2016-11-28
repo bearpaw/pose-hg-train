@@ -13,10 +13,25 @@ elseif opt.loadModel ~= 'none' then
     print('==> Loading model from: ' .. opt.loadModel)
     model = torch.load(opt.loadModel)
 
+-- Or to resume the training given the chekpoint dir 
+elseif opt.resume ~= 'none' then   
+    local latestPath = paths.concat(opt.resume, 'latest.t7')
+    assert(paths.filep(latestPath), 'Resume file not found: ' .. latestPath)
+
+    print('=> Loading checkpoint ' .. latestPath)
+    local latest = torch.load(latestPath)
+    optimState = torch.load(paths.concat(opt.resume, latest.optimFile))
+    model = torch.load(paths.concat(opt.resume, latest.modelFile))
+    epoch = latest.epoch
 -- Or we're starting fresh
 else
     print('==> Creating model from file: models/' .. opt.netType .. '.lua')
     model = createModel(modelArgs)
+end
+
+-- First remove any DataParallelTable
+if torch.type(model) == 'nn.DataParallelTable' then
+  model = model:get(1)
 end
 
 -- Criterion (can be set in the opt.task file as well)
@@ -32,4 +47,22 @@ if opt.GPU ~= -1 then
     
     cudnn.fastest = true
     cudnn.benchmark = true
+end
+
+
+-- Wrap the model with DataParallelTable, if using more than one GPU
+if opt.GPU > 1 then
+  local gpus = torch.range(1, opt.GPU):totable()
+  local fastest, benchmark = cudnn.fastest, cudnn.benchmark
+  local dpt = nn.DataParallelTable(1, true, true)
+     :add(model, gpus)
+     :threads(function()
+        local cudnn = require 'cudnn'
+        local nngraph = require 'nngraph'  -- wyang: to work with nngraph on multi-GPUs
+                                           -- https://github.com/torch/cunn/issues/241
+        cudnn.fastest, cudnn.benchmark = fastest, benchmark
+     end)
+  dpt.gradInput = nil
+
+  model = dpt:cuda()
 end

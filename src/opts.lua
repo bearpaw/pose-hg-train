@@ -21,6 +21,8 @@ local function parse(arg)
     cmd:option('-netType',          'hg', 'Options: hg | hg-stacked')
     cmd:option('-loadModel',      'none', 'Provide full path to a previously trained model')
     cmd:option('-continue',        false, 'Pick up where an experiment left off')
+    cmd:option('-resume',          'none','Resume from the latest checkpoint in this directory')
+    cmd:option('-loadModel',       'none','Load models')  
     cmd:option('-branch',         'none', 'Provide a parent expID to branch off')
     cmd:option('-task',           'pose', 'Network task: pose | pose-int')
     cmd:option('-nFeats',            256, 'Number of features in the hourglass')
@@ -85,7 +87,6 @@ else
     require 'cunn'
     require 'cudnn'
     nnlib = cudnn
-    cutorch.setDevice(opt.GPU)
 end
 
 if opt.branch ~= 'none' or opt.continue then
