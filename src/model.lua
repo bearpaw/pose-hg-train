@@ -45,7 +45,7 @@ if opt.GPU ~= -1 then
     model:cuda()
     criterion:cuda()
     
-    cudnn.fastest = true
+    --cudnn.fastest = true
     cudnn.benchmark = true
 end
 

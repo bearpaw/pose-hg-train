@@ -1,7 +1,7 @@
 *.t7
 *~
 *.pyc
-exp/
+exp
 data/**/images
 src/models/old
 *.sh

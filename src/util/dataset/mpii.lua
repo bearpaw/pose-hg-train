@@ -75,4 +75,3 @@ function Dataset:normalize(idx)
 end
 
 return M.Dataset
-

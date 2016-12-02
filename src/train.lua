@@ -108,7 +108,12 @@ function step(tag)
               optimFile = optimFile,
         })
         local predFilename = 'preds.h5'
-        if tag == 'predict' then predFilename = 'final_' .. predFilename end
+        if tag == 'predict' then 
+            predFilename = 'final_' .. predFilename 
+        elseif tag == 'valid' then
+            predFilename = 'valid_' .. predFilename
+            print(predFilename)
+        end
         local predFile = hdf5.open(paths.concat(opt.save,predFilename),'w')
         for k,v in pairs(saved) do predFile:write(k,v) end
         predFile:close()
